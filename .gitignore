@@ -1,0 +1,8 @@
+*.o
+
+# Ejecutables
+encoder
+decoder
+
+# Archivos de mas de 100MB (Github no permite subirlos)
+*.200MB

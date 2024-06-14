@@ -1,81 +1,101 @@
-#ifndef HUFFMAN_HPP
-#define HUFFMAN_HPP
-
-#include <fstream>
-#include <queue>
-#include <vector>
+#if !defined(HUFFMAN_H_INCLUDED)
+#define HUFFMAN_H_INCLUDED
+#include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
+#include <queue>
+#include <map>
+#include <fstream>
+#include <bitset>
+#include <algorithm>
+#include <filesystem>  
 
-struct Nodo_Huffman {
-	char ch;
-	int frec;
-	std::string code;
+using namespace std;
 
-	Nodo_Huffman* left;
-	Nodo_Huffman* right;
+const char filetag[] = "SAC";  // compressed file validation tag
 
-	Nodo_Huffman()
+// Structure and constructor for Huffman tree (min heap) node
+struct TreeNode
+{
+	bool isleaf;   // is this a leaf node ('false' marks an internal node)
+	char symbol;   // character
+	int weight;    // number of characters in file
+
+	TreeNode* leftpointer, * rightpointer; // pointers to left '0' node and right '1' node
+	// Constructor
+	TreeNode(char symbol, int weight, bool isleaf = false)
 	{
-		left = right = nullptr;
-		ch = '!';
-	};
-
-	bool es_hoja()
-	{
-		return (left == nullptr) && (right == nullptr);
-	};
+		leftpointer = rightpointer = NULL;
+		this->isleaf = isleaf;
+		this->symbol = symbol;
+		this->weight = weight;
+	}
 };
-typedef Nodo_Huffman* nodo_ptr;
 
-class Huffman {
-private:
-	nodo_ptr array_nodos[128];	// Para los 128 caracteres de la tabla ASCII
-	std::string input_file_name, output_file_name;
-	std::fstream input_file, output_file;
-	
-	std::string texto_codificado;
-	nodo_ptr raiz;
-
+class HuffmanCode
+{
 public:
-	class comparar {
-	public:
-		bool operator()(const nodo_ptr& n1, const nodo_ptr& n2)
+	HuffmanCode() :
+		alphabetcount(0),
+		totalcharacters(0) {};
+
+	bool CompressFile(std::ifstream& fin, std::ofstream& fout);
+	bool ExpandFile(std::ifstream& fin, std::ofstream& fout);
+	uintmax_t MapSymbols(std::ifstream&);
+	bool GrowHuffmanTree();
+	void ClearSymbolMap();
+	void ClearHuffmanTree();
+	void ClearCodeTable();
+	bool GetSymbolMap(std::map<char, int>&);
+	void PrintCodeTable();
+	uint16_t GetGetAlphabetCount();
+	uintmax_t GetTotalCharacters();
+	uintmax_t GetTotalCodedBits();
+private:
+	void MapSymbol(char);
+	void MakeCodesFromTree();
+	void MakePrefixCodes(TreeNode*, string);
+	void SortCodeTable();
+	void WriteCompressedFileHeader(std::ofstream&);
+	void WriteCompressedFile(std::ifstream&, std::ofstream&);
+	bool ReadCompressedFileHeader(std::ifstream&);
+	void ReadCompressedFile(std::ifstream&, std::ofstream&);
+
+	// For comparison of two nodes.
+	struct compare
+	{
+		bool operator()(TreeNode* leftnode, TreeNode* rightnode)
 		{
-			return n1->frec > n2->frec;	
+			return (leftnode->weight > rightnode->weight);
 		}
 	};
-	// La cola guardará los nodos, considerando priorizando las menores frecuencias
-	std::priority_queue<nodo_ptr, std::vector<nodo_ptr>, comparar> cola;
+
+	// In 'symbolmap' we store each character which appears in the target file together with the
+	// number of times (frequency) each character appears. The symbol is used as the map key.
+	map<char, int> symbolmap;
+
+	// Note: a Binary Heap can be either minheap or maxheap.
+	// In minheap, the tree is complete and the item at root must be minimum among all the items
+	// in the heap.This is recursively true for all the other nodes in the binary tree.
+
+	// Create a min heap using STL priority_queue. The 'compare' function, defined above, is ensuring
+	// that elements should be arranged according to frequency in the minheap.
+	priority_queue <TreeNode*, vector<TreeNode*>, compare> treeheap;
+
+	// create tuple map for final coding/decoding operation
+	// symbol, weight and prefix code as a string
+	vector<tuple<unsigned char, int, std::string>> codetable;
 
 
-	// Codificacion
-	void _codificar();
-	void obtener_frecuencias();
-	void llenar_cola();
-	void construir_arbol();
-	void crear_codes(nodo_ptr nodo, std::string code);
-	void escribir_codes();
-	void escribir_codificado();
+	// In our minheap we will store a 'TreeNode' which contains two variables, 'character' and 'frequency'.
+	// 'Character' represents the character and 'frequency', the number of times the character appears.
+	// There are also two pointers, 'leftpointer' and 'rightpointer' which, if we are an internal node,
+	// are storing the address of the node which is at the left and the right of the given node.
+	struct TreeNode* leftpointer = NULL, * rightpointer = NULL;
 
-	// Decodificacion
-	void _decodificar(bool leer_prefix = true);
-	void obtener_codigos();
-	void reconstruir_arbol();
-	void escribir_decodificado();
-
-	// Auxiliares
-	int str_binario_a_decimal(const std::string& binario);
-
-	// Debug
-	void print_nodos();
-	void print_ch(char ch);
-	void test_codificacion_decodificacion(const std::string& input);
-
-public:
-	std::string char_a_str_binario(char ch);
-	Huffman();
-	void codificar(const std::string& input, const std::string& output);
-	void decodificar(const std::string& input, const std::string& output);
+	uint8_t alphabetcount = 0;
+	uintmax_t totalcharacters = 0;
 };
 
-#endif /* HUFFMAN_HPP */
+
+#endif // HUFFMAN_H_INCLUDED

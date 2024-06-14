@@ -1,307 +1,326 @@
-/*
- *  Visualizacion del arbol:
- *       R
- *     /   \
- *    o     o
- *   / \    / \   
- *  6   5  4   o
- *            /  \
- *           3    o
- *               / \
- *              2   1
- */
-#include <cstdint>
 #include "Huffman.hpp"
 
 
-Huffman::Huffman()
+bool HuffmanCode::CompressFile(std::ifstream& fin, std::ofstream& fout)
 {
-	for (int i = 0; i < 128; i++) {
-		array_nodos[i] = new Nodo_Huffman;
-		array_nodos[i]->ch = i;
-		array_nodos[i]->frec = 0;
+	bool result = false;
+	if (MapSymbols(fin))
+	{
+		GrowHuffmanTree();
+		WriteCompressedFileHeader(fout);
+		WriteCompressedFile(fin, fout);
+		result = true;
 	}
-}
+	return result;
+};
 
-
-// Codificacion
-
-void Huffman::codificar(const std::string& input, const std::string& output)
+// Build a table of symbols in the file and the number of occurrances (weight)
+uintmax_t HuffmanCode::MapSymbols(std::ifstream& fin)
 {
-	input_file_name = input;
-	output_file_name = output;
-	_codificar();
-}
-
-
-void Huffman::_codificar()
-{
-	obtener_frecuencias();
-	llenar_cola();
-	construir_arbol();
-	crear_codes(raiz, "");
-	print_nodos();
-	escribir_codificado();
-}
-
-
-void Huffman::obtener_frecuencias()
-{
-	input_file.open(input_file_name, std::ios::in);
-	if (!input_file)
-		return;
-
+	totalcharacters = 0;
 	char ch;
-	while (input_file.get(ch)) {
-		array_nodos[ch]->frec++;
+	while (fin.get(ch))
+	{
+		MapSymbol(ch);       // build map of symbols and weight
 	}
-	input_file.close();
-}
+	// reset stream so that we can read it again
+	fin.clear();
+	fin.seekg(0);
+	return totalcharacters;
+};
 
-void Huffman::llenar_cola()
+// Build Huffman Tree
+bool HuffmanCode::GrowHuffmanTree()
 {
-	for (int i = 0; i < 128; i++) {
-		if(array_nodos[i]->frec > 0)
-			cola.push(array_nodos[i]);
+	//   struct TreeNode* leftpointer, * rightpointer;
+	//   priority_queue <TreeNode*, vector<TreeNode*>, compare> treeheap;
+
+	// For each character create a leaf node and insert each leaf node in the heap.
+	// Traverse the map
+	for (const auto& it : symbolmap) {
+		treeheap.push(new TreeNode(it.first, it.second, true));
 	}
-}
 
-void Huffman::construir_arbol()
-{
-	nodo_ptr nodo1, nodo2, tmp;
-	std::priority_queue<nodo_ptr, std::vector<nodo_ptr>, comparar> temp(cola);
-	while (temp.size() > 1) {
-		nodo1 = temp.top(); temp.pop();
-		nodo2 = temp.top(); temp.pop();
+	// Iterate while size of min heap doesn't become 1
+	while (treeheap.size() != 1)
+	{
+		//Extract two nodes from the heap.
+		leftpointer = treeheap.top();
+		treeheap.pop();
 
-		tmp = new Nodo_Huffman;
-		tmp->frec = nodo1->frec + nodo2->frec;
-		// Se ubican las menores frecuencias a la derecha
-		// (Ver visualización del arbol)
-		tmp->right = nodo1;
-		tmp->left = nodo2;
+		rightpointer = treeheap.top();
+		treeheap.pop();
 
-		temp.push(tmp);
+		// Create a new internal node with weight equal to the sum of two extracted nodes.
+		// By default 'leaf' will be false marking it as an internal node.
+		// Assign symbol '\0' to this node and make the two extracted nodes as the left and right children. 
+		// Add this node to the heap. 
+		TreeNode* tmp = new TreeNode('\0', leftpointer->weight + rightpointer->weight);
+		tmp->leftpointer = leftpointer;
+		tmp->rightpointer = rightpointer;
+		treeheap.push(tmp);
 	}
-	raiz = temp.top(); temp.pop();
+	MakeCodesFromTree();
+	SortCodeTable();
+
+	return true;
 }
 
-void Huffman::crear_codes(nodo_ptr nodo, std::string code)
+// Write file tag, active symbol count, total character count and contents of charactermap to file
+void HuffmanCode::WriteCompressedFileHeader(std::ofstream& fout)
 {
-	if (nodo->left == nullptr && nodo->right == nullptr) {
-		nodo->code = code;
-		return;
+	// Write the header verification tag and the character counts
+	fout.write((const char*)&filetag, sizeof(filetag));
+	fout.write((const char*)&alphabetcount, sizeof(alphabetcount));
+	fout.write((const char*)&totalcharacters, sizeof(totalcharacters));
+
+	// Write the symbol and weights map to the file
+	// This data is used to rebuild the Huffman tree for the decode
+
+	// Iterate over the map until end.
+	for (const auto& it : symbolmap) {
+		// Accessing KEY (symbol) from element pointed by it.
+		char symbol = it.first;
+		fout.write((const char*)&symbol, sizeof(symbol));
+		// Accessing VALUE (weight) from element pointed by it.
+		int weight = it.second;
+		fout.write((const char*)&weight, sizeof(weight));
 	}
-	crear_codes(nodo->left, code + '0');
-	crear_codes(nodo->right, code + '1');
-}
+};
 
-void Huffman::escribir_codes()
+void HuffmanCode::WriteCompressedFile(std::ifstream& fin, std::ofstream& fout)
 {
-	// TODO
-}
+	string outbyte = "";
+	char symbol;
+	fin.clear();
+	fin.seekg(0);
+	while (fin)
+	{
+		// get character from infile
+		fin.get(symbol);
+		// look for character match in tuple
+		auto it = std::find_if(codetable.begin(), codetable.end(), [&symbol](const std::tuple<unsigned char, int, std::string>& e)
+			{
+				return std::get<0>(e) == symbol;
+			});
 
-void Huffman::escribir_codificado()
-{
-	input_file.open(input_file_name, std::ios::in);
-	if (!input_file)
-		return;
-	// std::ios::binary para que escriba EXACTAMENTE lo que le decimos
-	output_file.open(output_file_name, std::ios::out | std::ios::binary);
-	if (!output_file)
-		return;
-
-	/* Se deben escribir los codigos correspondientes a cada caracter del
-	 * texto concatenados. Dado que la minima unidad que somos capaces de
-	 * escribir es 1 byte, debemos agrupar codigos de 8 bits = 1 byte, para
-	 * escribir.
-	 *
-	 * En buffer se acumulan los 1s y 0s, en str se arman los bytes a
-	 * a escribir */
-	std::string buffer = "", str = "";
-	texto_codificado = "";
-	char ch;
-	while (input_file.get(ch)) {
-		buffer += array_nodos[ch]->code;
-		//std::cout << array_nodos[ch]->code << ' ';
-		while (buffer.size() > 8) {
-			// Formamos un byte
-			texto_codificado += (char)str_binario_a_decimal(buffer.substr(0,8));
-			/*std::cout << "Byte = ";
-			std::cout << str_binario_a_decimal(buffer.substr(0,8));
-			std::cout << '\n'; */
-
-			// Removemos 8 bits del buffer
-			buffer = buffer.substr(8);
-		}
-	}
-	std::cout << '\n';
-	// Es posible que queden < 8 bits, en el buffer, llenamos con 0s
-	int bits_padding = 8 - buffer.size();
-	if (buffer.size() < 8) {
-		buffer.append(bits_padding, '0');
-	}
-	/*for (int i = 0; i < bits_padding; i++)
-		std::cout << "0";
-	std::cout << " Byte = ";
-	std::cout << str_binario_a_decimal(buffer);
-	std::cout << '\n'; */
-	texto_codificado += (char)str_binario_a_decimal(buffer);
-	texto_codificado += (char)bits_padding; // Necesario para la decodificacion
-	//std::cout << "Codificacion:\n";
-	//std::cout << str << "|final\n\n\n";
-
-	output_file.write(texto_codificado.c_str(), texto_codificado.size());
-	input_file.close();
-	output_file.close();
-}
-
-
-// Decodificacion
-
-void Huffman::decodificar(const std::string& input, const std::string& output)
-{
-	input_file_name = input;
-	output_file_name = output;
-	obtener_codigos();
-	reconstruir_arbol();
-	_decodificar();
-}
-
-void Huffman::obtener_codigos()
-{
-	// TODO
-}
-
-void Huffman::reconstruir_arbol()
-{
-	// TODO
-}
-
-void Huffman::_decodificar(bool leer_prefix)
-{
-	input_file.open(input_file_name, std::ios::in | std::ios::binary);
-	if (!input_file)
-		return;
-
-	char padding_ceros;
-	input_file.seekg(-1, std::ios::end);
-	input_file.read(&padding_ceros, 1);
-	std::streampos file_size = input_file.tellg();
-	std::cout << "File size: " << file_size << "\nPadding ceros: " << (int)padding_ceros << std::endl;
-
-	input_file.seekg(0, std::ios::beg);
-
-	if (leer_prefix) {
-		// TODO
-	}
-	
-	//input_file.seekg(-1, std::ios::end);
-	//char bits_padding;
-	//input_file.get(bits_padding);
-	//unsigned int file_size = input_file.tellg(); // Tamaño del archivo
-
-	//input_file.seekg(0);	//TODO
-	
-	// Decodificacion del texto
-	nodo_ptr current;
-	char byte;
-	unsigned int bits_restantes = 0;
-	//while (!input_file.eof()) {
-	for(size_t i = 0; i < file_size || bits_restantes > 0;) {
-		current = raiz;
-		while (!current->es_hoja()) {
-			if (bits_restantes == 0) {
-				input_file.read(reinterpret_cast<char*>(&byte), 1);
-				//std::cout << std::hex << (int)byte;
-				if (i < file_size - 2)
-					bits_restantes = 8;
-				// Para el penultimo byte, se ignoran los ceros de relleno
-				else {
-					bits_restantes = 8 - padding_ceros;
-					i++; // Evitamos procesar el ultimo byte
-				}
-				i++;
+		if (it != codetable.end())
+		{
+			outbyte += std::get<2>(*it);
+			if (outbyte.length() >= 8)
+			{
+				std::bitset<8> b1(outbyte.substr(0, 8));
+				outbyte.erase(0, 8);
+				fout.write((const char*)&b1, 1);
 			}
+		}
+	}
+};
 
-			if (byte & 0x80) { // true si 8vo bit es uno
-				//std::cout << '1';
-				current = current->right;
-			} else {
-				//std::cout <<'0';
-				current = current->left;
+bool HuffmanCode::HuffmanCode::ExpandFile(std::ifstream& fin, std::ofstream& fout)
+{
+	if (!ReadCompressedFileHeader(fin))
+	{
+		return false;
+	};
+	GrowHuffmanTree();
+	ReadCompressedFile(fin, fout);
+	return true;
+}
+
+// Recover count numbers from front of file
+bool HuffmanCode::ReadCompressedFileHeader(std::ifstream& fin)
+{
+	int count = 0;
+	alphabetcount = 0;
+	totalcharacters = 0;
+	char temptag[sizeof(filetag)]{};
+	// Read verification tag
+	fin.read(const_cast<char*>(temptag), sizeof(filetag));
+	if (string(temptag) != string(filetag))
+	{
+		fin.close();
+		return false;
+	}
+	// Read the counters from the file into variables
+	fin.read(reinterpret_cast<char*>(&alphabetcount), sizeof(alphabetcount));
+	fin.read(reinterpret_cast<char*>(&totalcharacters), sizeof(totalcharacters));
+
+	// Read the symbol and weight data and construct symbolmap
+	ClearSymbolMap();
+	char tempsymbol = 0;
+	int tempcount = 0;
+	for (unsigned int count = 0; count < alphabetcount; count++)
+	{
+		fin.read(reinterpret_cast<char*>(&tempsymbol), sizeof(char));
+		fin.read(reinterpret_cast<char*>(&tempcount), sizeof(int));
+		symbolmap.insert(make_pair(tempsymbol, tempcount));
+	}
+	return true;
+};
+
+// Process the compressed section of the file
+void HuffmanCode::ReadCompressedFile(std::ifstream& fin, std::ofstream& fout)
+{
+	// Reposition start point past the header information
+	size_t startpos = (sizeof(filetag) + sizeof(alphabetcount) + sizeof(totalcharacters) + alphabetcount * (sizeof(char) + sizeof(int)));
+	fin.seekg(startpos);
+	char inchar;
+	unsigned char mask = 0x80;
+	unsigned char code = 0;
+	uintmax_t totalbytes = GetTotalCodedBits() / 8;		// number of complete bytes in the encoded file
+	unsigned char extrabits = GetTotalCodedBits() % 8;  // odd bits at the end og the file
+	TreeNode* node = treeheap.top();
+	for (uintmax_t index = 0; index < totalbytes; index++)
+	{
+		fin.get(inchar);
+		for (unsigned char offset = 0; offset < 8; offset++)
+		{
+			code = (inchar & mask) ? 1 : 0;
+			// look up tree
+			node = (code) ? node->rightpointer : node->leftpointer;
+			if (node->isleaf)
+			{
+				fout.write(&node->symbol, 1);
+				node = treeheap.top();
 			}
-			byte = (byte << 1) & 0xFF;
-			bits_restantes--;
+			inchar = inchar << 1;
 		}
-		std::cout << current->ch;
 	}
-	
-
+	if (extrabits)  // any spare bits that are not a whole byte
+	{
+		fin.get(inchar);
+        for (unsigned char offset = 0; offset < extrabits; offset++)
+		{
+			code = (inchar & mask) ? 1 : 0;
+			// look up tree
+			node = (code) ? node->rightpointer : node->leftpointer;
+			if (node->isleaf)
+			{
+				fout.write(&node->symbol, 1);
+				node = treeheap.top();
+			}
+			inchar = inchar << 1;
+		}
+	}
 }
 
-void Huffman::escribir_decodificado()
+// Clear character map
+void HuffmanCode::ClearSymbolMap()
 {
-	output_file.open(output_file_name, std::ios::out);
-	if (!output_file)
+	symbolmap = {};
+};
+
+// Clear the tree
+void HuffmanCode::ClearHuffmanTree()
+{
+	treeheap = {};
+};
+
+// Clear all tuples
+void HuffmanCode::ClearCodeTable()
+{
+	codetable = {};
+};
+
+// Make the Huffman tree
+void HuffmanCode::MakeCodesFromTree()
+{
+	MakePrefixCodes(treeheap.top(), "");
+}
+
+// Generate Huffman Prefix Codes as strings
+void HuffmanCode::MakePrefixCodes(TreeNode* node, string str)
+{
+	if (!node)  // If node is Null then return.
+	{
 		return;
-	// TODO
-}
-
-
-// Auxiliares
-
-int Huffman::str_binario_a_decimal(const std::string& binario)
-{
-	int sum = 0;
-	for (size_t i = 0; i < binario.size(); i++) {
-		// '0' = 48, '1' = 49
-		sum = sum*2 + (binario[i] - '0');
 	}
-	return sum;
+	// If the node's leaf is true, that means it's not an internal node and save the string.
+	if (node->isleaf)
+	{
+		codetable.push_back(make_tuple(node->symbol, node->weight, str));
+	}
+	MakePrefixCodes(node->leftpointer, str + "0");
+	MakePrefixCodes(node->rightpointer, str + "1");
 }
 
-std::string Huffman::char_a_str_binario(char ch)
+// Add a character to the symbolmap.
+// Add entry for new symbols or update count for existing symbols
+void HuffmanCode::MapSymbol(char character)
 {
-	// TODO
-	return "";
+	// Traverse the map looking for existing entry
+	auto it = symbolmap.find(character);
+	if (it != symbolmap.end())  // existing symbol entry, update count
+	{
+		it->second++;
+	}
+	else
+	{
+		// new symbol found, add entry
+		symbolmap.insert(make_pair(character, 1));
+		alphabetcount++;      // keep count of different symbols
+	}
+	totalcharacters++;      // keep track of total characters read
+	return;
 }
 
-
-// Debug
-
-void Huffman::print_nodos()
+// Sort tuple by value of second element
+bool sortbysec(const tuple<char, int, string>& a, const tuple<char, int, string>& b)
 {
-	for (int i = 0; i < 128; i++) {
-		if (array_nodos[i]->frec) {
-			print_ch(array_nodos[i]->ch);
-			std::cout << ": " << array_nodos[i]->code << std::endl;
-			std::cout << std::endl;
-		}
-		if (!array_nodos[i]->es_hoja()) {
-			print_ch(array_nodos[i]->ch);
-			std::cout << " No es hoja!\n";
-		}
+	return (get<1>(b) < get<1>(a));
+}
+
+// Sort tuple based on symbol weight
+void HuffmanCode::SortCodeTable()
+{
+	sort(codetable.begin(), codetable.end(), sortbysec);
+}
+
+// Print Huffman Codes
+void HuffmanCode::PrintCodeTable()
+{
+	for (const auto& it : codetable)
+	{
+		cout << std::get<0>(it) << "\t: " << std::get<1>(it) << "\t: " << std::get<2>(it) << endl;
 	}
 }
 
-void Huffman::print_ch(char ch)
+// Give a copy of CharacterMap when requested, if it has been built
+bool HuffmanCode::GetSymbolMap(map<char, int>& tempmap)
 {
-	std::cout << '\'';
-	if (ch == ' ') {
-		std::cout << '_';
-	} else if (ch == '\n') {
-		std::cout << "\\n";
-	} else {
-		std::cout << ch;
-	}
-	std::cout << '\'';
-}
+	bool result = false;
 
-void Huffman::test_codificacion_decodificacion(const std::string& input)
+	if (symbolmap.size())
+	{
+		tempmap = symbolmap;
+		result = true;
+	}
+	return result;
+};
+
+// Return number of symbols in the CharacterMap
+uint16_t HuffmanCode::GetGetAlphabetCount()
 {
-	codificar(input, "codificado.txt");
-	input_file_name = "codificado.txt";
-	output_file_name = "decodificado.txt";
-	_decodificar(false);
-}
+	return alphabetcount;
+};
+
+// Return total number of characters in the file
+uintmax_t HuffmanCode::GetTotalCharacters()
+{
+	return totalcharacters;
+};
+
+
+
+// Return total number of bits in the coded file
+uintmax_t HuffmanCode::GetTotalCodedBits()
+{
+	size_t totalbits = 0;
+	for (const auto& it : codetable)
+	{
+		// multiply number of times symbol appears by the number of bits in the prefix code
+		totalbits += (std::get<1>(it) * (std::get<2>(it)).length());
+	}
+	return totalbits;
+};

@@ -1,50 +1,42 @@
 # Compiler
-CXX = g++
+CC = g++
 
 # Compiler flags
-CXXFLAGS = -Wall -Wextra -std=c++17 -Iinclude
+CFLAGS = -Wall -g -Iinclude
 
-# Directories
-SRCDIR = src
-INCDIR = include
-OBJDIR = obj
-BINDIR = bin
+# Executable names
+ENCODER = encoder
+DECODER = decoder
 
-# Target executable
-TARGET = main
+# Source directories
+SRC_DIR = src
+INCLUDE_DIR = include
 
-# Source and object files
-SOURCES = $(wildcard $(SRCDIR)/*.cpp)
-OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
+# Source files
+SRC_ENCODER = $(SRC_DIR)/encoder.cpp $(SRC_DIR)/Huffman.cpp
+SRC_DECODER = $(SRC_DIR)/decoder.cpp $(SRC_DIR)/Huffman.cpp
+
+# Object files
+OBJ_ENCODER = $(SRC_ENCODER:.cpp=.o)
+OBJ_DECODER = $(SRC_DECODER:.cpp=.o)
 
 # Default target
-all: $(TARGET) test
+all: $(ENCODER) $(DECODER)
 
-# Rule to link object files into the final executable
-$(TARGET): $(OBJECTS) | $(BINDIR)
-	$(CXX) $(OBJECTS) -o $(TARGET)
+# Pattern rule to build object files
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCLUDE_DIR)/Huffman.hpp
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Rule to compile source files into object files
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Rule to build encoder
+$(ENCODER): $(OBJ_ENCODER)
+	$(CC) $(CFLAGS) -o $@ $^
 
-# Create necessary directories if they don't exist
-$(BINDIR):
-	mkdir -p $(BINDIR)
+# Rule to build decoder
+$(DECODER): $(OBJ_DECODER)
+	$(CC) $(CFLAGS) -o $@ $^
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-
-# Testing
-test: .FORCE
-	./test.sh
-
-# Clean up build artifacts
+# Clean up
 clean:
-	rm -rf $(OBJDIR) $(BINDIR)
+	rm -f $(OBJ_ENCODER) $(OBJ_DECODER) $(ENCODER) $(DECODER)
 
-# Phony targets
 .PHONY: all clean
-
-
-.FORCE:
