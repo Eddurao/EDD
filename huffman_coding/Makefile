@@ -18,7 +18,7 @@ SOURCES = $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
 
 # Default target
-all: $(TARGET)
+all: $(TARGET) test
 
 # Rule to link object files into the final executable
 $(TARGET): $(OBJECTS) | $(BINDIR)
@@ -35,9 +35,16 @@ $(BINDIR):
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
+# Testing
+test: .FORCE
+	./test.sh
+
 # Clean up build artifacts
 clean:
 	rm -rf $(OBJDIR) $(BINDIR)
 
 # Phony targets
 .PHONY: all clean
+
+
+.FORCE:

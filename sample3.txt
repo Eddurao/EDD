@@ -11,7 +11,7 @@ def validar(li, ls, msg):
         try:
             x=int(x)
         except:
-            print("Error, ingrese un número válido.")
+            print("Error, ingrese un numero valido.")
         else:
             if li <= x <= ls:
                 return x
@@ -50,11 +50,11 @@ def mov(v,u,dim):
         if esquina(x1,y1,dim):
             return 5
 
-    # Cálculo con matriz
+    # Calculo con matriz
     if deltax < 4 and deltay < 4:
         return matriz[deltax][deltay]
 
-    # Cálculo con fórmula
+    # Calculo con formula
     else:
         m = max(deltax/2, deltay/2, (deltax+deltay)/3)
         redondeado=round(m)
@@ -66,7 +66,7 @@ def mov(v,u,dim):
         return movimientos
 
 # Calcula movimientos necesarios para recorrer la secuencia 'sec'
-# Detiene el cálculo cuando la suma pasa el limite 'lim'
+# Detiene el calculo cuando la suma pasa el limite 'lim'
 def mov_sec(sec, lim, dim):
     sum=0
     i=-1
@@ -110,7 +110,7 @@ def cota_superior(interesantes, dim):
     min_movimientos=mov_sec(secuencia, -1, dim)
     return min_movimientos
 
-# Cálculo cota inferior
+# Calculo cota inferior
 def cota_inferior(interesantes, dim):
     if len(interesantes) > 2:
         redundancias=0
@@ -148,7 +148,7 @@ def permutaciones(sec):
         for i in range(len(sec)):
             yield perm[:i] + sec[0:1] + perm[i:]
 
-# Calcula solución óptima
+# Calcula solucion optima
 def encontrar_optimo(sec, ideal, dim):
     optimo=-1
     primera=[sec[0]]
@@ -161,14 +161,14 @@ def encontrar_optimo(sec, ideal, dim):
             return optimo
     return optimo
 
-T=validar(1,100,'Ingrese el número de casos de prueba: ')
+T=validar(1,100,'Ingrese el numero de casos de prueba: ')
 si=['si','SI','Si','sI','s', 'S', '']
 for caso in range(1,T+1):
     print('########################')
     print(f'### Caso de prueba {caso} ###')
     print('########################')
 
-    dim=validar(4,1000,'Tamaño del tablero: ')
+    dim=validar(4,1000,'Tamano del tablero: ')
     K=validar(1,16,'Nro. de casillas interesantes: ')
     print('Ingrese las casillas interesantes:')
     interesantes=[]
@@ -192,11 +192,11 @@ for caso in range(1,T+1):
     cota_sup=cota_superior(interesantes, dim)
     print(f'{cota_sup} movimientos. ',end='')
     if cota_sup == cota_inf:
-        print('(La aproximación arrojó una solución óptima)')
+        print('(La aproximacion arrojo una solucion optima)')
     else:
         print('(Aprox)')
-        print(f'La solución óptima se puede encontrar entre {cota_inf} y {cota_sup}.')
-        print(f'Calculando solución optima. Se probarán hasta {factorial(K-1)} combinaciones.')
+        print(f'La solucion optima se puede encontrar entre {cota_inf} y {cota_sup}.')
+        print(f'Calculando solucion optima. Se probaran hasta {factorial(K-1)} combinaciones.')
         optimo=encontrar_optimo(interesantes_copia, cota_inf, dim)
-        print(f'{optimo} movimientos. (Solución óptima)')
+        print(f'{optimo} movimientos. (Solucion optima)')
     print()

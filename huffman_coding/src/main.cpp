@@ -7,5 +7,5 @@ int main(int argc, char** argv)
 	}
 	std::string file = argv[1];
 	Huffman* coder = new Huffman();
-	coder->codificar(file);
+	coder->test_codificacion_decodificacion(file);
 }

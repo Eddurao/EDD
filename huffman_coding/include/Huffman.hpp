@@ -17,6 +17,12 @@ struct Nodo_Huffman {
 	Nodo_Huffman()
 	{
 		left = right = nullptr;
+		ch = '!';
+	};
+
+	bool es_hoja()
+	{
+		return (left == nullptr) && (right == nullptr);
 	};
 };
 typedef Nodo_Huffman* nodo_ptr;
@@ -24,10 +30,10 @@ typedef Nodo_Huffman* nodo_ptr;
 class Huffman {
 private:
 	nodo_ptr array_nodos[128];	// Para los 128 caracteres de la tabla ASCII
-	std::string input_file_name; //, output_file_name;
-	std::ifstream input_file;
-	//ofstream output_file;
+	std::string input_file_name, output_file_name;
+	std::fstream input_file, output_file;
 	
+	std::string texto_codificado;
 	nodo_ptr raiz;
 
 public:
@@ -38,24 +44,38 @@ public:
 			return n1->frec > n2->frec;	
 		}
 	};
-	// La cola guardará los nodos, considerando priorizando las menores frecuencias.
+	// La cola guardará los nodos, considerando priorizando las menores frecuencias
 	std::priority_queue<nodo_ptr, std::vector<nodo_ptr>, comparar> cola;
 
 
+	// Codificacion
+	void _codificar();
 	void obtener_frecuencias();
 	void llenar_cola();
 	void construir_arbol();
 	void crear_codes(nodo_ptr nodo, std::string code);
+	void escribir_codes();
+	void escribir_codificado();
 
-	// debug
+	// Decodificacion
+	void _decodificar(bool leer_prefix = true);
+	void obtener_codigos();
+	void reconstruir_arbol();
+	void escribir_decodificado();
+
+	// Auxiliares
+	int str_binario_a_decimal(const std::string& binario);
+
+	// Debug
 	void print_nodos();
 	void print_ch(char ch);
+	void test_codificacion_decodificacion(const std::string& input);
 
 public:
+	std::string char_a_str_binario(char ch);
 	Huffman();
-	void codificar(const std::string& input_file_name);
-	void decodificar(const std::string& input_file_name);
-
+	void codificar(const std::string& input, const std::string& output);
+	void decodificar(const std::string& input, const std::string& output);
 };
 
 #endif /* HUFFMAN_HPP */
