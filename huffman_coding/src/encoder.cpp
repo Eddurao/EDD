@@ -2,7 +2,7 @@
 #include <fstream>
 #include <chrono>
 
-#include <Huffman.hpp>
+#include "Huffman.hpp"
 
 using namespace std::chrono;
 
@@ -56,10 +56,14 @@ int main(int argc, char **argv) {
 		auto stop = high_resolution_clock::now();
 		duracion_total += duration_cast<milliseconds>(stop - start).count();
 	
-		// Limpiamos las estructuras internas del codificador
-		coder->ClearSymbolMap();
-		coder->ClearHuffmanTree();
-		coder->ClearCodeTable();
+		// Reseteamos todo
+		input_file.clear();
+		input_file.seekg(0, std::ios::beg);
+		output_file.clear();
+		output_file.seekp(0);
+		delete coder;
+		coder = new HuffmanCode();
+
 	}
 	
 	duracion_promedio = duracion_total / repeticiones;
