@@ -1,5 +1,8 @@
 #if !defined(HUFFMAN_H_INCLUDED)
 #define HUFFMAN_H_INCLUDED
+
+//#define ORIGINAL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -12,7 +15,9 @@
 
 using namespace std;
 
+#ifdef ORIGINAL
 const char filetag[] = "SAC";  // compressed file validation tag
+#endif
 
 // Structure and constructor for Huffman tree (min heap) node
 struct TreeNode
@@ -20,6 +25,7 @@ struct TreeNode
 	bool isleaf;   // is this a leaf node ('false' marks an internal node)
 	char symbol;   // character
 	int weight;    // number of characters in file
+	std::string code;
 
 	TreeNode* leftpointer, * rightpointer; // pointers to left '0' node and right '1' node
 	// Constructor
@@ -35,10 +41,7 @@ struct TreeNode
 class HuffmanCode
 {
 public:
-	HuffmanCode() :
-		alphabetcount(0),
-		totalcharacters(0) {};
-
+	HuffmanCode();
 	bool CompressFile(std::ifstream& fin, std::ofstream& fout);
 	bool ExpandFile(std::ifstream& fin, std::ofstream& fout);
 	uintmax_t MapSymbols(std::ifstream&);
@@ -46,7 +49,9 @@ public:
 	void ClearSymbolMap();
 	void ClearHuffmanTree();
 	void ClearCodeTable();
+#ifdef ORIGINAL
 	bool GetSymbolMap(std::map<char, int>&);
+#endif
 	void PrintCodeTable();
 	uint16_t GetGetAlphabetCount();
 	uintmax_t GetTotalCharacters();
@@ -72,7 +77,12 @@ private:
 
 	// In 'symbolmap' we store each character which appears in the target file together with the
 	// number of times (frequency) each character appears. The symbol is used as the map key.
+#ifdef ORIGINAL
 	map<char, int> symbolmap;
+#else
+	TreeNode *symbolarray[128];
+#endif
+
 
 	// Note: a Binary Heap can be either minheap or maxheap.
 	// In minheap, the tree is complete and the item at root must be minimum among all the items
