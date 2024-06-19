@@ -1,0 +1,4 @@
+nro_prueba;archivo;tiempo_codificacion;tiempo_decodificacion;size_encoded;size_original
+1;01-dna.50MB;6220;3260;14483827;52428800
+2;02-dna.100MB;6474;3166;28905855;104857600
+3;03-dna.200MB;11913;6359;57741057;209715200

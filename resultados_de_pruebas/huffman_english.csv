@@ -1,0 +1,4 @@
+nro_prueba;archivo;tiempo_codificacion;tiempo_decodificacion;size_encoded;size_original
+1;01-english.50MB;5016;2298;29880845;52411715
+2;02-english.100MB;10200;4582;60118438;104823571
+3;03-english.200MB;20023;9132;119434474;209671456

@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 		repeticiones = 1;
 
 	// Abrimos el archivo original
-	input_file.open(argv[1]);
+	input_file.open(argv[1], std::ios::binary);
 	if (!input_file.is_open())
 	{
 		std::cerr << "encoder error: No se pudo abrir el archivo.\n";
