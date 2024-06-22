@@ -64,7 +64,7 @@ do
 
 	# Comprobación
 	diff_result=$(diff -y --suppress-common-lines $file $temp_dec | wc -l)
-	if [ "$diff_result" -gt 5 ]
+	if [ "$diff_result" -gt 1 ]
 	then
 		printf "Decodificando %s, el archivo decodificado difiere.\n" "$archivo" >> $diff_log
 	fi

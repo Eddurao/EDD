@@ -1,5 +1,5 @@
 nro_prueba;archivo;tiempo_codificacion;tiempo_decodificacion;size_encoded;size_original
-1;00-sample1.txt;159;0;1012;881
-2;01-sample2.txt;155;0;6272;3883
-3;02-sample3.txt;160;0;8360;6068
-4;10-random.txt;595;217;2021692;1048576
+1;00-sample1.txt;149.85;0;1012;881
+2;01-sample2.txt;147.3;0;6272;3883
+3;02-sample3.txt;151.15;0.05;8360;6068
+4;10-random.txt;576.15;207.3;2021692;1048576

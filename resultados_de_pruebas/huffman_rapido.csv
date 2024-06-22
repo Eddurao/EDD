@@ -2,4 +2,4 @@ nro_prueba;archivo;tiempo_codificacion;tiempo_decodificacion;size_encoded;size_o
 1;00-sample1.txt;0;0;643;881
 2;01-sample2.txt;0;0;2278;3883
 3;02-sample3.txt;0;0;3737;6068
-4;10-random.txt;145;72;917083;1048576
+4;10-random.txt;141.05;71;917083;1048576
