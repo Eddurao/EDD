@@ -42,8 +42,8 @@ class HuffmanCode
 {
 public:
 	HuffmanCode();
-	bool CompressFile(std::ifstream& fin, std::ofstream& fout);
-	bool ExpandFile(std::ifstream& fin, std::ofstream& fout);
+	bool codificar(std::ifstream& fin, std::ofstream& fout);
+	bool decodificar(std::ifstream& fin, std::ofstream& fout);
 	uintmax_t MapSymbols(std::ifstream&);
 	bool GrowHuffmanTree();
 	void ClearSymbolMap();

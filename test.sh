@@ -1,8 +1,10 @@
-#!/usr/bin/sh
+#!/usr/bin/env sh
+set -e
 
 # Config
-dataset=rapido	# Valor default. Opciones: dna , csources , english , random , rapido
+dataset="rapido"	# Valor default. Opciones: dna , csources , english , random , rapido
 results_dir=resultados_de_pruebas
+testfiles=testfiles/$dataset/*
 results_huffman=$results_dir/huffman_$dataset.csv
 results_LZ=$results_dir/LZ_$dataset.csv
 
@@ -43,7 +45,7 @@ printf "Probando codificación Huffman\n"
 printf "nro_prueba;archivo;tiempo_codificacion;tiempo_decodificacion;size_encoded;size_original\n" > $results_huffman
 
 nro_prueba=0
-for file in testfiles/$dataset/*
+for file in $testfiles
 do
 	nro_prueba=$(( $nro_prueba + 1 ))
 
@@ -81,7 +83,7 @@ printf "Probando compresión Lempel_Ziv\n"
 printf "nro_prueba;archivo;tiempo_codificacion;tiempo_decodificacion;size_encoded;size_original\n" > $results_LZ
 
 nro_prueba=0
-for file in testfiles/$dataset/*
+for file in $testfiles
 do
 	nro_prueba=$(( $nro_prueba + 1 ))
 

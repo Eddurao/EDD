@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 	bool success;
 	for (int i = 0; i < repeticiones; i++) {
 		auto start = high_resolution_clock::now();
-		success = coder->ExpandFile(input_file, output_file);
+		success = coder->decodificar(input_file, output_file);
 		if (!success) {
 			std::cerr << "decoder error: Error en la decodificacion.\n";
 			return 3;

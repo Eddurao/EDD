@@ -11,7 +11,7 @@ HuffmanCode::HuffmanCode() : alphabetcount(0), totalcharacters(0)
 }
 #endif
 
-bool HuffmanCode::CompressFile(std::ifstream& fin, std::ofstream& fout)
+bool HuffmanCode::codificar(std::ifstream& fin, std::ofstream& fout)
 {
 	bool result = false;
 	if (MapSymbols(fin))
@@ -162,7 +162,7 @@ void HuffmanCode::WriteCompressedFile(std::ifstream& fin, std::ofstream& fout)
 	}
 };
 
-bool HuffmanCode::ExpandFile(std::ifstream& fin, std::ofstream& fout)
+bool HuffmanCode::decodificar(std::ifstream& fin, std::ofstream& fout)
 {
 	if (!ReadCompressedFileHeader(fin))
 	{

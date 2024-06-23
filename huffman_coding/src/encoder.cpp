@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
 	for (int i = 0; i < repeticiones; i++) {
 		auto start = high_resolution_clock::now();
-		success = coder->CompressFile(input_file, output_file);
+		success = coder->codificar(input_file, output_file);
 		if (!success) {
 			std::cerr << "encoder error: Error en la codificacion.\n";
 			return 3;
