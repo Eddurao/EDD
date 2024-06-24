@@ -4,37 +4,37 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-vector<int> encode(const string& s1) {
-    unordered_map<string, int> table;
+vector<int> encode(const string& s1) { 
+    unordered_map<string, int> table; //Diccionario que almacena las secuencias vistas
     for (int i = 0; i <= 255; i++) {
         string ch = "";
         ch += char(i);
-        table[ch] = i;
+        table[ch] = i;  //Inicialización
     }
 
-    string p = "", c = "";
+    string p = "", c = "";  //"p" prefijo actual y "c" sufijo actual
     p += s1[0];
-    int code = 256; ///////////////EDICION 34ncht2oiunchiowercoiwcmgoierwnhgwoi
-    vector<int> output_code;
+    int code = 256; 
+    vector<int> output_code; //Vector para almacenar los códigos de salida comprimidos
     for (int i = 0; i < s1.length(); i++) {
         if (i != s1.length() - 1)
             c += s1[i + 1];
         if (table.find(p + c) != table.end()) {
             p = p + c;
         } else {
-            output_code.push_back(table[p]);
+            output_code.push_back(table[p]); //Se añade al vector el código de p
             table[p + c] = code;
             code++;
-            p = c;
+            p = c; //Se actualiza el prefijo p
         }
         c = "";
     }
     output_code.push_back(table[p]);
-    return output_code;
+    return output_code; //Devuelve el vector de códigos comprimidos
 }
 
 string decode(const vector<int>& op) {
-    unordered_map<int, string> table;
+    unordered_map<int, string> table; //Diccionario para almacenar las secuencias recuperadas
     for (int i = 0; i <= 255; i++) {
         string ch = "";
         ch += char(i);
@@ -45,7 +45,7 @@ string decode(const vector<int>& op) {
     string c = "";
     c += s[0];
     string result = s;
-    int count = 256;
+    int count = 256; //Contador para los próximos códigos disponibles en el diccionario
     for (int i = 0; i < op.size() - 1; i++) {
         n = op[i + 1];
         if (table.find(n) == table.end()) {
@@ -57,7 +57,7 @@ string decode(const vector<int>& op) {
         result += s;
         c = "";
         c += s[0];
-        table[count] = table[old] + c;
+        table[count] = table[old] + c; //Se añade al diccionario la entrada correspondiente
         count++;
         old = n;
     }
@@ -65,11 +65,11 @@ string decode(const vector<int>& op) {
 }
 
 vector<int> compress(const string& input) {
-    return encode(input);
+    return encode(input); //Utiliza la función para realizar la compresión
 }
 
 string decompress(const vector<int>& input) {
-    return decode(input);
+    return decode(input); //Utiliza la función para realizar la descompresión
 }
 
 #endif // LZ77COMPRESSION_H
